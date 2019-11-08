@@ -3,6 +3,7 @@ import numpy as np
 
 class Metrics(object):
     def __init__(self,y_true,y_pred,threshold=0.5):
+        """y_true and y_pred should be same dims"""
         self.y_true = y_true
         self.y_pred = y_pred
         self.bool_y_true = (y_true==np.max(y_true))
