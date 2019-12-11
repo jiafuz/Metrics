@@ -4,21 +4,22 @@ import numpy as np
 class Metrics(object):
     def __init__(self, y_true, y_pred, threshold=0.5):
         """y_true and y_pred should be same dims"""
-        self.y_true = y_true
-        self.y_pred = y_pred
-        self.bool_y_true = (y_true == np.max(y_true))
-        self.bool_y_pred = (y_pred > threshold)
+        self.y_true = np.array(y_true)
+        self.y_pred = np.array(y_pred)
+        self.bool_y_true = (self.y_true == np.max(self.y_true))
+        self.bool_y_pred = (self.y_pred > threshold)
         self.threshold = threshold
+        self.sigma = 1e-9
         self.TP, self.TN, self.FP, self.FN = self._cal_base()
 
     def get_dice_coef(self, smooth=0):
         # Dice coefficient(A,B) = 2*(A n B)/(|A| + |B|)
-        dice_coefficient = (2 * self.TP + smooth) / (2 * self.TP + self.FP + self.FN + smooth)
+        dice_coefficient = (2 * self.TP + smooth) / (2 * self.TP + self.FP + self.FN + smooth + self.sigma)
         return dice_coefficient
 
     def get_iou(self):
         # IOU(A,B) = (A n B)/(A u B)
-        iou = self.TP / (self.TP + self.FP + self.FN)
+        iou = self.TP / (self.TP + self.FP + self.FN + self.sigma)
         return iou
 
     def _cal_base(self):
@@ -34,25 +35,25 @@ class Metrics(object):
         return TP, TN, FP, FN
 
     def get_accuracy(self):
-        _accuracy = (self.TP + self.TN) / (self.TP + self.TN + self.FP + self.FN)
+        _accuracy = (self.TP + self.TN) / (self.TP + self.TN + self.FP + self.FN + self.sigma)
         return _accuracy
 
     def get_recall(self):
-        _recall = self.TP / (self.TP + self.FN)
+        _recall = self.TP / (self.TP + self.FN + self.sigma)
         return _recall
 
     def get_precision(self):
-        _precision = self.TP / (self.TP + self.FP)
+        _precision = self.TP / (self.TP + self.FP + self.sigma)
         return _precision
 
     def get_F1_score(self):
         _precision = self.get_precision()
         _recall = self.get_recall()
-        _F1_score = 2 * (_precision * _recall) / (_precision + _recall + 1e-7)
+        _F1_score = 2 * (_precision * _recall) / (_precision + _recall + self.sigma)
         return _F1_score
 
     def get_specificity(self):
-        _specificity = self.TN / (self.TN + self.FP)
+        _specificity = self.TN / (self.TN + self.FP + self.sigma)
         return _specificity
 
     def get_info(self):
@@ -64,8 +65,10 @@ class Metrics(object):
 
 
 if __name__ == "__main__":
-    y_pred = np.random.rand(5, 5)
-    y_true = np.random.randint(0, 2, size=(5, 5))
+    # y_pred = np.random.rand(5, 5)
+    # y_true = np.random.randint(0, 2, size=(5, 5))
+    y_pred = [1,0,1]
+    y_true = [1,0,0]
     metrics = Metrics(y_true, y_pred, threshold=0.5)
     print(metrics.get_info())
     print(metrics._cal_base())
